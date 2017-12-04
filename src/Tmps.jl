@@ -2,6 +2,7 @@ import Base.dot
 import Base.norm
 import Base.trace
 
+
 type TMPS
   A
   oc::Int64
@@ -62,10 +63,10 @@ function moveocone_TMPS!(Ai,Ai1,toright)
         Ai1[:,:,:,:]=(newAi1);
     else
         MatAi1=reshape(Ai1,mbd,phyd*auxd*rbd);
-        AiQ,AiR=qr(ctranspose(MatAi1))
-        @tensor newAi[a,b,d,c]:=Ai[a,b,d,x]*ctranspose(AiR)[x,c]
-        Ai1[:,:,:]=(reshape(ctranspose(AiQ),mbd,phyd,auxd,rbd));
-        Ai[:,:,:]=(newAi);
+        AiQ,AiR=qr(transpose(MatAi1))
+        @tensor newAi[a,b,d,c]:=Ai[a,b,d,x]*transpose(AiR)[x,c]
+        Ai1[:,:,:,:]=(reshape(transpose(AiQ),mbd,phyd,auxd,rbd));
+        Ai[:,:,:,:]=(newAi);
         
     end
 end    
@@ -99,6 +100,7 @@ function moveto!(ψ::TMPS,newoc::Int64)  #move oc of an MPS to r
     ψ.oc=newoc;
 end
 
+
 function trace(ψ::TMPS)
     totn=length(ψ.A)
     A1=ψ.A[1]
@@ -112,3 +114,31 @@ function trace(ψ::TMPS)
     @tensor traceval=scalar(T[3,2]*A1[2,1,1,3])
     return traceval
 end 
+
+function normalizeMPS!(ψ::TMPS)
+    if ψ.oc==length(ψ.A)
+        moveto!(ψ,length(ψ.A)-1)
+    end
+    oc=ψ.oc
+    Ai=ψ.A[oc]
+    Ai1=ψ.A[oc+1]
+    (lbd,phyd,auxd,mbd)=size(Ai)
+    (mbd,phyd,auxd,rbd)=size(Ai1)
+    @tensor AiAi1[lb,phy1,aux1,phy2,aux2,rb]:=Ai[lb,phy1,aux1,md]*Ai1[md,phy2,aux2,rb]
+    AA=reshape(AiAi1,lbd*phyd*auxd,phyd*auxd*rbd)
+    #do svd find the schmidt value
+    (u,d,v) = svd(AA)
+    mm=mbd;
+    d = d[1:mm]
+    U = u[:,1:mm]
+    V = v[:,1:mm]'
+    #determine the norm
+    totnorm=dot(d,d)
+    d=d/sqrt(totnorm) #normalize the MPS
+    U = U * diagm(d) #put the OC toleft
+    #put the matrices back
+    ψ.A[oc]=reshape(U,lbd,phyd,auxd,mbd);
+    ψ.A[oc+1]=reshape(V,mbd,phyd,auxd,rbd);
+    return totnorm
+end
+

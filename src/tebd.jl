@@ -1,8 +1,6 @@
 #functions for doing sweeping---------------------------------------------------------
 function odd_sweep!(ψ::TMPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly always sweep to the right
-    #cgateL=conj(gateL);
-    #cgateM=conj(gateM);
-    #cgateR=conj(gateR);
+    L=length(ψ.A)
     #apply gate (HL) to MPS1 MPS2
     moveto!(ψ,1) #move the oc to 1st site to start
     Ai=ψ.A[1]
@@ -45,6 +43,7 @@ function odd_sweep!(ψ::TMPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly alwa
 end
 
 function even_sweep!(ψ::TMPS,gateM2,maxm,thres=0.0)  #implicitly always sweep to the left
+    L=length(ψ.A)
     for ii=-(L-1)+1:2:-2
         i=-ii;
         moveto!(ψ,i+1)
@@ -62,7 +61,7 @@ function even_sweep!(ψ::TMPS,gateM2,maxm,thres=0.0)  #implicitly always sweep t
 end
 
 function imag_odd_sweep!(ψ::TMPS,gateL,gateM,gateR,βmaxm,βthres=0.0)  #implicitly always sweep to the right
-
+    L=length(ψ.A)
     #apply gate (HL) to MPS1 MPS2
     moveto!(ψ,1) #move the oc to 1st site to start
     Ai=ψ.A[1]
@@ -105,7 +104,7 @@ function imag_odd_sweep!(ψ::TMPS,gateL,gateM,gateR,βmaxm,βthres=0.0)  #implic
 end
 
 function imag_even_sweep!(ψ::TMPS,gateM2,βmaxm,βthres=0.0)  #implicitly always sweep to the left
-   
+   L=length(ψ.A)
     for ii=-(L-1)+1:2:-2
         i=-ii;
         moveto!(ψ,i+1)
@@ -113,7 +112,7 @@ function imag_even_sweep!(ψ::TMPS,gateM2,βmaxm,βthres=0.0)  #implicitly alway
         Ai1=ψ.A[i+1]
        (lbd,phyd,auxd,mbd)=size(Ai);
        (mbd,phyd,auxd,rbd)=size(Ai1);
-        @tensor AA[a,p1p,q1,p2p,q2,b]:=gateM2[-2,-4,2,3]*Ai[-1,2,-3,1]*Ai1[1,3,-5,-6];
+        @tensor AA[:]:=gateM2[-2,-4,2,3]*Ai[-1,2,-3,1]*Ai1[1,3,-5,-6];
         (U,V,trunc)=dosvdleftright(reshape(AA,lbd*phyd*auxd,phyd*auxd*rbd),βmaxm[i],false,βthres)
         (trash,mbd)=size(U)
         ψ.A[i]=reshape(U,lbd,phyd,auxd,mbd)
