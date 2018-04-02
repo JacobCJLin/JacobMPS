@@ -216,7 +216,7 @@ function expO1(ψ::MPS,O,toright=true)
         moveto!(ψ,site);
         Asite=ψ.A[site]
         @tensor oval=scalar(Asite[a,b,c]*conj(Asite[a,bp,c])*O[bp,b])
-        exp+=oval/Ltot
+         exp+=oval
         end
     else   
         for ssite=-Ltot:-1
@@ -224,7 +224,7 @@ function expO1(ψ::MPS,O,toright=true)
         moveto!(ψ,site);
         Asite=ψ.A[site]
         @tensor oval=scalar(Asite[a,b,c]*conj(Asite[a,bp,c])*O[bp,b])
-        exp+=oval/Ltot
+        exp+=oval
         end
     end 
     return exp
@@ -238,5 +238,44 @@ function expO1_j(ψ::MPS,O,site)
     @tensor oval=scalar(Asite[a,b,c]*conj(Asite[a,bp,c])*O[bp,b])
     exp+=oval
    return exp
+end 
+
+function expO2_j(ψ::MPS,O,j)
+    L=length(ψ.A);
+    if j!=L
+    exp=0;
+    moveto!(ψ,j);
+    Aj=ψ.A[j]
+    Aj1=ψ.A[j+1]
+        @tensor oval=scalar(Aj[a,b,c]*conj(Aj[a,bp,cp])*Aj1[c,d,e]*conj(Aj1[cp,dp,e])*O[bp,dp,b,d])
+    exp+=oval
+        
+    end
+   return exp
+end 
+
+
+function expO2(ψ::MPS,O,toright=true)
+    L=length(ψ.A);
+    exp=0;
+    if toright
+       for j=1:L-1
+        moveto!(ψ,j);
+    Aj=ψ.A[j]
+    Aj1=ψ.A[j+1]
+        @tensor oval=scalar(Aj[a,b,c]*conj(Aj[a,bp,cp])*Aj1[c,d,e]*conj(Aj1[cp,dp,e])*O[bp,dp,b,d])
+        exp+=oval
+        end
+    else   
+        for ssite=-L+1:-1
+        site=-ssite
+        moveto!(ψ,j);
+        Aj=ψ.A[j]
+        Aj1=ψ.A[j+1]
+        @tensor oval=scalar(Aj[a,b,c]*conj(Aj[a,bp,cp])*Aj1[c,d,e]*conj(Aj1[cp,dp,e])*O[bp,dp,b,d])
+        exp+=oval
+        end
+    end 
+    return exp
 end 
 

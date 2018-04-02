@@ -133,12 +133,12 @@ function normalizeMPS!(ψ::TMPS)
     U = u[:,1:mm]
     V = v[:,1:mm]'
     #determine the norm
-    totnorm=dot(d,d)
-    d=d/sqrt(totnorm) #normalize the MPS
+    totnorm2=dot(d,d)
+    d=d/sqrt(totnorm2) #normalize the MPS
     U = U * diagm(d) #put the OC toleft
     #put the matrices back
     ψ.A[oc]=reshape(U,lbd,phyd,auxd,mbd);
     ψ.A[oc+1]=reshape(V,mbd,phyd,auxd,rbd);
-    return totnorm
+    return totnorm2
 end
 
