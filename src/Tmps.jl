@@ -1,4 +1,4 @@
-struct TMPS
+mutable struct TMPS
   A
   oc::Int64
 end
@@ -52,16 +52,20 @@ function moveocone_TMPS!(Ai,Ai1,toright)
 
     if toright
         MatAi=reshape(Ai,lbd*phyd*auxd,mbd);
-        AiQ,AiR=qr(MatAi)
+        MatAiQR=qr(MatAi)
+        AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         @tensor newAi1[a,b,d,c]:=AiR[a,x]*Ai1[x,b,d,c]
-        Ai[:,:,:,:]=(reshape(AiQ,lbd,phyd,auxd,mbd));
-        Ai1[:,:,:,:]=(newAi1);
+        Ai[:,:,:,:]=copy(reshape(AiQ,lbd,phyd,auxd,mbd));
+        Ai1[:,:,:,:]=copy(newAi1);
     else
         MatAi1=reshape(Ai1,mbd,phyd*auxd*rbd);
-        AiQ,AiR=qr(transpose(MatAi1))
-        @tensor newAi[a,b,d,c]:=Ai[a,b,d,x]*transpose(AiR)[x,c]
-        Ai1[:,:,:,:]=(reshape(transpose(AiQ),mbd,phyd,auxd,rbd));
-        Ai[:,:,:,:]=(newAi);
+        MatAi1t=copy(transpose(MatAi1))
+        MatAiQR=qr(MatAi1t)
+        AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
+        AiRt=copy(transpose(AiR))
+        @tensor newAi[a,b,d,c]:=Ai[a,b,d,x]*AiRt[x,c]
+        Ai1[:,:,:,:]=copy(reshape(transpose(AiQ),mbd,phyd,auxd,rbd));
+        Ai[:,:,:,:]=copy(newAi);
         
     end
 end    
@@ -130,7 +134,7 @@ function normalizeMPS!(ψ::TMPS)
     #determine the norm
     totnorm2=dot(d,d)
     d=d/sqrt(totnorm2) #normalize the MPS
-    U = U * diagm(d) #put the OC toleft
+    U = U * Diagonal(d) #put the OC toleft
     #put the matrices back
     ψ.A[oc]=reshape(U,lbd,phyd,auxd,mbd);
     ψ.A[oc+1]=reshape(V,mbd,phyd,auxd,rbd);

@@ -1,4 +1,4 @@
-struct MPS
+mutable struct MPS
   A
   oc::Int64
 end
@@ -24,9 +24,9 @@ end
 function dosvdleftright(AA,m,toright,thres=0.0)
     (U,d,V,trunc) = dosvdtrunc(AA,m,thres)
     if toright   #true -> svd to the right
-    V = diagm(d) * V
+    V = Diagonal(d) * V
     else
-    U = U * diagm(d)
+    U = U * Diagonal(d)
     end
     (U,V,trunc)
 end
@@ -89,23 +89,26 @@ end
 function moveocone!(Ai,Ai1,toright)
     (lbd,phyd,mbd)=size(Ai);
     (mbd,phyd,rbd)=size(Ai1);
-
     if toright
         MatAi=reshape(Ai,lbd*phyd,mbd);
-        AiQ,AiR=qr(MatAi)
+        MatAiQR=qr(MatAi)
+        AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         @tensor newAi1[a,b,c]:=AiR[a,x]*Ai1[x,b,c]
         A1=(reshape(AiQ,lbd,phyd,mbd));
-        Ai[:,:,:]=(A1)
-        Ai1[:,:,:]=(newAi1);
+        Ai[:,:,:]=copy(A1)
+        Ai1[:,:,:]=copy(newAi1);
     else
         MatAi1=reshape(Ai1,mbd,phyd*rbd);
-        AiQ,AiR=qr(ctranspose(MatAi1))
-        @tensor newAi[a,b,c]:=Ai[a,b,x]*ctranspose(AiR)[x,c]
-        Ai1[:,:,:]=(reshape(ctranspose(AiQ),mbd,phyd,rbd));
-        Ai[:,:,:]=(newAi);
+        MatAi1t=copy(transpose(MatAi1))
+        MatAiQR=qr(MatAi1t)
+        AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
+        AiRt=copy(transpose(AiR))
+        @tensor newAi[a,b,c]:=Ai[a,b,x]*AiRt[x,c]
+        Ai1[:,:,:]=copy(reshape(transpose(AiQ),mbd,phyd,rbd));
+        Ai[:,:,:]=copy(newAi);
         
     end
-end    
+end      
 
 function moveto!(ψ::MPS,newoc::Int64)  #move oc of an MPS to r
     oldoc=ψ.oc;
