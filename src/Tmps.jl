@@ -1,9 +1,4 @@
-import Base.dot
-import Base.norm
-import Base.trace
-
-
-type TMPS
+struct TMPS
   A
   oc::Int64
 end
@@ -26,7 +21,7 @@ function totnormsq(ψ::TMPS)
     return normsqval
 end
 
-function dot(ψ2::TMPS,ψ1::TMPS)
+function Tmpsdot(ψ2::TMPS,ψ1::TMPS)
     totn=length(ψ1.A)
     A1=ψ1.A[1]
     A2=ψ2.A[1]
@@ -43,7 +38,7 @@ function dot(ψ2::TMPS,ψ1::TMPS)
     return normsqval
 end
 
-function norm(ψ::TMPS)
+function Tmpsnorm(ψ::TMPS)
     ocsite=ψ.oc;
     val=0.0;
     M=ψ.A[ocsite];
@@ -77,7 +72,7 @@ function moveto!(ψ::TMPS,newoc::Int64)  #move oc of an MPS to r
     if dist==0
         return ;
     end
-    dist>0?toright=true:toright=false
+    dist>0 ? toright=true : toright=false
     
     count=abs(dist)
     if toright
@@ -101,7 +96,7 @@ function moveto!(ψ::TMPS,newoc::Int64)  #move oc of an MPS to r
 end
 
 
-function trace(ψ::TMPS)
+function Tmpstrace(ψ::TMPS)
     totn=length(ψ.A)
     A1=ψ.A[1]
     @tensor T[:]:=A1[-1,1,1,-2]

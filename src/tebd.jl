@@ -1,5 +1,5 @@
 #functions for doing sweeping---------------------------------------------------------
-function odd_sweep!(ψ::TMPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly always sweep to the right
+function Tmpsoddsweep!(ψ::TMPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly always sweep to the right
     L=length(ψ.A)
     #apply gate (HL) to MPS1 MPS2
     moveto!(ψ,1) #move the oc to 1st site to start
@@ -44,7 +44,7 @@ function odd_sweep!(ψ::TMPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly alwa
         ψ.oc=i+1;
 end
 
-function even_sweep!(ψ::TMPS,gateM2,maxm,thres=0.0)  #implicitly always sweep to the left
+function Tmpsevensweep!(ψ::TMPS,gateM2,maxm,thres=0.0)  #implicitly always sweep to the left
     L=length(ψ.A)
     for ii=-(L-1)+1:2:-2
         i=-ii;
@@ -171,7 +171,7 @@ end
 
 function evensweep!(ψ::MPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly always sweep to the left
     L=length(ψ.A)
-    rem(L,2)==0?startpt=-(L-2):startpt=-(L-1)
+    rem(L,2)==0 ? startpt=-(L-2) : startpt=-(L-1)
     for ii=startpt:2:-2
         i=-ii;
         moveto!(ψ,i+1)
@@ -203,7 +203,7 @@ function tebdsweep!(ψ::MPS,gateL,gateM,gateR,maxm,thres=0.0)  # second-order tr
     
 end
 
-function genmaxm(L,phyd,MaxBd)
+function generatemaxbd(L,phyd,MaxBd)
     maxm=zeros(Int64,L-1)
 for i=1:L-1
     a=min(16,i);
