@@ -139,6 +139,24 @@ function moveto!(ψ::MPS,newoc::Int64)  #move oc of an MPS to r
     ψ.oc=newoc;
 end
 
+function Svon_j(ψ::MPS,j)
+    moveto!(ψ,j)
+    oc=ψ.oc
+    Ai=ψ.A[oc]
+    Ai1=ψ.A[oc+1]
+    (lbd,phyd,mbd)=size(Ai)
+    (mbd,phyd,rbd)=size(Ai1)
+    @tensor AiAi1[lb,phy1,phy2,rb]:=Ai[lb,phy1,md]*Ai1[md,phy2,rb]
+    AA=reshape(AiAi1,lbd*phyd,phyd*rbd)
+    #do svd find the schmidt value
+    (u,s,v) = svd(AA)
+    EE=0
+    for i=1:length(s)
+        abs(s[i])>1.0E-16 ? EE+=-s[i]^2*log(s[i]^2) : nothing
+    end
+    return EE
+end
+
 function expσz(ψ::MPS,toright=true)
     O=[1 0;0 -1];
     Ltot=length(ψ.A);
