@@ -165,13 +165,11 @@ function normalizeMPS!(ψ::MPS)
     if ψ.oc==length(ψ.A)
         moveto!(ψ,length(ψ.A)-1)
     end
-    @show ψ.oc
     oc=ψ.oc
     Ai=ψ.A[oc]
     Ai1=ψ.A[oc+1]
     (lbd,phyd,mbd)=size(Ai)
     (mbd,phyd,rbd)=size(Ai1)
-    @show size(Ai),size(Ai1)
     @tensor AiAi1[lb,phy1,phy2,rb]:=Ai[lb,phy1,md]*Ai1[md,phy2,rb]
     AA=reshape(AiAi1,lbd*phyd,phyd*rbd)
     #do svd find the schmidt value
