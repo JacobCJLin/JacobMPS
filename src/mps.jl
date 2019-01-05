@@ -86,7 +86,7 @@ function mpsnorm(ψ::MPS)
     return sqrt(real(val))
 end
 
-function moveocone!(Ai,Ai1,toright)
+function moveocone(Ai,Ai1,toright)
     (lbd,phyd,mbd)=size(Ai);
     (mbd,phyd,rbd)=size(Ai1);
     if toright
@@ -94,9 +94,11 @@ function moveocone!(Ai,Ai1,toright)
         MatAiQR=qr(MatAi)
         AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         @tensor newAi1[a,b,c]:=AiR[a,x]*Ai1[x,b,c]
+        mbd=size(AiQ)[2]
         A1=(reshape(AiQ,lbd,phyd,mbd));
-        Ai[:,:,:]=copy(A1)
-        Ai1[:,:,:]=copy(newAi1);
+        Ai=(A1)
+        Ai1=(newAi1);
+        return Ai,Ai1
     else
         MatAi1=reshape(Ai1,mbd,phyd*rbd);
         MatAi1t=copy(transpose(MatAi1))
@@ -104,11 +106,12 @@ function moveocone!(Ai,Ai1,toright)
         AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         AiRt=copy(transpose(AiR))
         @tensor newAi[a,b,c]:=Ai[a,b,x]*AiRt[x,c]
-        Ai1[:,:,:]=copy(reshape(transpose(AiQ),mbd,phyd,rbd));
-        Ai[:,:,:]=copy(newAi);
-        
+        mbd=size(AiQ)[2]
+        Ai1=(reshape(transpose(AiQ),mbd,phyd,rbd));
+        Ai=(newAi);
+        return Ai,Ai1
     end
-end      
+end    
 
 function moveto!(ψ::MPS,newoc::Int64)  #move oc of an MPS to r
     oldoc=ψ.oc;
@@ -123,7 +126,7 @@ function moveto!(ψ::MPS,newoc::Int64)  #move oc of an MPS to r
        for i=1:count
             Ai=ψ.A[oldoc+i-1]
             Ai1=ψ.A[oldoc+i]
-            moveocone!(Ai,Ai1,toright)
+            Ai,Ai1=moveocone(Ai,Ai1,toright)
             ψ.A[oldoc+i-1]=Ai;
             ψ.A[oldoc+i]=Ai1;
        end    
@@ -131,13 +134,61 @@ function moveto!(ψ::MPS,newoc::Int64)  #move oc of an MPS to r
          for i=1:count
             Ai=ψ.A[oldoc-i]
             Ai1=ψ.A[oldoc-i+1]
-            moveocone!(Ai,Ai1,false)
+            Ai,Ai1=moveocone(Ai,Ai1,false)
             ψ.A[oldoc-i]=Ai;
             ψ.A[oldoc-i+1]=Ai1;
         end
     end    
     ψ.oc=newoc;
 end
+
+function canonicalize!(ψ::MPS)
+L=length(ψ.A)
+    for i=1:L-1    
+    Ai=ψ.A[i]
+    Ai1=ψ.A[i+1]
+    (lbd,phyd,mbd)=size(Ai);
+    (mbd,phyd,rbd)=size(Ai1);
+    MatAi=reshape(Ai,lbd*phyd,mbd);
+    MatAiQR=qr(MatAi)
+    AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
+    mbd=size(AiQ)[2]
+    @tensor newAi1[a,b,c]:=AiR[a,x]*Ai1[x,b,c]
+    A1=(reshape(AiQ,lbd,phyd,mbd));
+    ψ.A[i]=copy(A1)
+    ψ.A[i+1]=copy(newAi1);    
+    end
+ψ.oc=L;   
+end
+
+function normalizeMPS!(ψ::MPS)
+    if ψ.oc==length(ψ.A)
+        moveto!(ψ,length(ψ.A)-1)
+    end
+    @show ψ.oc
+    oc=ψ.oc
+    Ai=ψ.A[oc]
+    Ai1=ψ.A[oc+1]
+    (lbd,phyd,mbd)=size(Ai)
+    (mbd,phyd,rbd)=size(Ai1)
+    @show size(Ai),size(Ai1)
+    @tensor AiAi1[lb,phy1,phy2,rb]:=Ai[lb,phy1,md]*Ai1[md,phy2,rb]
+    AA=reshape(AiAi1,lbd*phyd,phyd*rbd)
+    #do svd find the schmidt value
+    (u,d,v) = svd(AA)
+    d = d[1:mbd]
+    U = u[:,1:mbd]
+    V = v[:,1:mbd]'
+    #determine the norm
+    totnorm2=dot(d,d)
+    d=d/sqrt(totnorm2) #normalize the MPS
+    U = U * Diagonal(d) #put the OC to left
+    #put the matrices back
+    ψ.A[oc]=reshape(U,lbd,phyd,mbd);
+    ψ.A[oc+1]=reshape(V,mbd,phyd,rbd);
+    return totnorm2
+end
+
 
 function Svon_j(ψ::MPS,j)
     moveto!(ψ,j)

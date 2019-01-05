@@ -55,8 +55,9 @@ function moveocone_TMPS!(Ai,Ai1,toright)
         MatAiQR=qr(MatAi)
         AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         @tensor newAi1[a,b,d,c]:=AiR[a,x]*Ai1[x,b,d,c]
-        Ai[:,:,:,:]=copy(reshape(AiQ,lbd,phyd,auxd,mbd));
-        Ai1[:,:,:,:]=copy(newAi1);
+        mbd=size(AiQ)[2]
+        Ai=copy(reshape(AiQ,lbd,phyd,auxd,mbd));
+        Ai1=copy(newAi1);
     else
         MatAi1=reshape(Ai1,mbd,phyd*auxd*rbd);
         MatAi1t=copy(transpose(MatAi1))
@@ -64,8 +65,9 @@ function moveocone_TMPS!(Ai,Ai1,toright)
         AiQ,AiR=Array(MatAiQR.Q), MatAiQR.R
         AiRt=copy(transpose(AiR))
         @tensor newAi[a,b,d,c]:=Ai[a,b,d,x]*AiRt[x,c]
-        Ai1[:,:,:,:]=copy(reshape(transpose(AiQ),mbd,phyd,auxd,rbd));
-        Ai[:,:,:,:]=copy(newAi);
+        mbd=size(AiQ)[2]
+        Ai1=copy(reshape(transpose(AiQ),mbd,phyd,auxd,rbd));
+        Ai=copy(newAi);
         
     end
 end    
@@ -114,7 +116,7 @@ function Tmpstrace(ψ::TMPS)
     return traceval
 end 
 
-function normalizeMPS!(ψ::TMPS)
+function normalizeTMPS!(ψ::TMPS)
     if ψ.oc==length(ψ.A)
         moveto!(ψ,length(ψ.A)-1)
     end
