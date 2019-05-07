@@ -192,14 +192,15 @@ function evensweep!(ψ::MPS,gateL,gateM,gateR,maxm,thres=0.0)  #implicitly alway
     end
 end
 
-function tebdsweep!(ψ::MPS,gateL,gateM,gateR,maxm,thres=0.0)  # second-order trotter
-    @tensor gateM2[a,b,e,f]:=gateM[a,b,c,d]*gateM[c,d,e,f]
+function tebdsweep!(ψ::MPS,gateL,gateE,gateO,gateR,maxm,thres=0.0)  # second-order trotter
+    @tensor gateE2[a,b,e,f]:=gateE[a,b,c,d]*gateE[c,d,e,f]
     @tensor gateL2[a,b,e,f]:=gateL[a,b,c,d]*gateL[c,d,e,f]
     @tensor gateR2[a,b,e,f]:=gateR[a,b,c,d]*gateR[c,d,e,f]
+    #@tensor gateO2[a,b,e,f]:=gateO[a,b,c,d]*gateO[c,d,e,f]
     
-    oddsweep!(ψ,gateL,gateM,gateR,maxm,thres)
-    evensweep!(ψ,gateL2,gateM2,gateR2,maxm,thres)
-    oddsweep!(ψ,gateL,gateM,gateR,maxm,thres)
+    oddsweep!(ψ,gateL,gateO,gateR,maxm,thres)
+    evensweep!(ψ,gateL2,gateE2,gateR2,maxm,thres)
+    oddsweep!(ψ,gateL,gateO,gateR,maxm,thres)
     
 end
 
